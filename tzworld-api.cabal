@@ -1,0 +1,46 @@
+name: tzworld-api
+version: 0.0.0
+cabal-version: >=1.10
+build-type: Simple
+license: MIT
+license-file: LICENSE.md
+copyright: 2015 Dan Plubell <danplubell@gmail.com>
+maintainer: Dan Plubell <danplubell@gmail.com>
+synopsis: TODO
+description:
+    TODO
+category: TODO
+author: Dan Plubell <danplubell@gmail.com>
+tested-with: GHC ==7.10
+extra-source-files:
+    CHANGELOG.md
+    README.md
+
+library
+    exposed-modules:
+        Data.TZworld.Api
+    other-modules:
+        Paths_tzworld_api
+    ghc-options: -Wall
+    build-depends:
+                  base ==4.*
+                , sqlite-simple >=0.4
+                , bytestring >=0.10
+                , binary >=0.7
+                , containers >=0.5
+    default-language: Haskell2010
+    hs-source-dirs: library
+    ghc-prof-options:-auto-all -prof
+
+executable tzbl
+    main-is: Main.hs
+    build-depends:
+          base -any
+        , tzworld-api -any
+    default-language: Haskell2010
+    hs-source-dirs: executable
+    ghc-prof-options: -auto-all -prof
+    ghc-options: -Wall
+
+                         
+
