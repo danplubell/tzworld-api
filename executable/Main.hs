@@ -1,9 +1,24 @@
+{-#LANGUAGE OverloadedStrings #-}
 module Main (main) where
 
 import Data.TZworld.Api
+import System.Environment
+import Text.Read
 
 main :: IO ()
 main = do
-  tz <- findTZByLoc (41.294159, -86.622625)
-  putStrLn tz
+  args <- getArgs
+  if length args < 2
+     then error "usage: tzbl <latitude value> <longitude value>"
+     else do
+       lat <-case readMaybe $ head args::Maybe Double of
+               Just a -> return a
+               Nothing -> error "The latitude value was invalid"
+  
+       long <-case readMaybe $ args!!1::Maybe Double of
+                Just a -> return a
+                Nothing -> error "The longitude value was invalid"
+  
+       tz <- findTZByLoc (lat, long)
+       putStrLn $ "The time zone is [" ++ tz ++ "] for latitude: " ++ show lat ++ " longitude: " ++ show long
   
