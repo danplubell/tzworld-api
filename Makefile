@@ -1,4 +1,4 @@
-.PHONY: all bench build clean configure install repl run 
+.PHONY: all bench build clean configure install repl run haddock test
 
 all: install configure build 
 
@@ -24,4 +24,10 @@ repl:
 
 run:
 	cabal run --jobs tzworld-api
+haddock:
+	cabal haddock --hyperlink-source
+        # dist/doc/html/tzworld-api/index.html
+test:
+	cabal test --jobs
+	check check
 

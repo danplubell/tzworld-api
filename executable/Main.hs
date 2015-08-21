@@ -20,5 +20,5 @@ main = do
                 Nothing -> error "The longitude value was invalid"
   
        tz <- findTZByLoc (lat, long)
-       putStrLn $ "The time zone is [" ++ tz ++ "] for latitude: " ++ show lat ++ " longitude: " ++ show long
+       putStrLn $ "The time zone is [" `mappend` tz `mappend` "] for latitude: " `mappend` show lat `mappend` " longitude: " `mappend` show long
   
