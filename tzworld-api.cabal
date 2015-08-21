@@ -4,18 +4,26 @@ cabal-version: >=1.10
 build-type: Simple
 license: MIT
 license-file: LICENSE.md
+homepage: https://github.com/danplubell/tzworld-api.git
 copyright: 2015 Dan Plubell <danplubell@gmail.com>
 maintainer: Dan Plubell <danplubell@gmail.com>
-synopsis: TODO
-description:
-    TODO
-category: TODO
+synopsis: API for finding an Olson time zone based on a location
+description:  API for finding an Olson time zone based on a location given as latitude and longitude.
+              .
+              This package includes an executable named tzbl that uses the api.
+              .
+              This package requires SQLite3.
+              
+category: Time
 author: Dan Plubell <danplubell@gmail.com>
 tested-with: GHC ==7.10
 extra-source-files:
     CHANGELOG.md
     README.md
 data-files: tzworld.db
+source-repository head
+    type: git
+    location: git@github.com:danplubell/tzworld-api.git
 library
     exposed-modules:
         Data.TZworld.Api
@@ -31,7 +39,7 @@ library
                 , text >=1.2
     default-language: Haskell2010
     hs-source-dirs: library
-    ghc-prof-options:-auto-all -prof
+--    ghc-prof-options:-auto-all -prof
 
 executable tzbl
     main-is: Main.hs
@@ -40,7 +48,7 @@ executable tzbl
         , tzworld-api -any
     default-language: Haskell2010
     hs-source-dirs: executable
-    ghc-prof-options: -auto-all -prof
+--    ghc-prof-options: -auto-all -prof
     ghc-options: -Wall
 
 test-suite documentation
@@ -52,7 +60,8 @@ test-suite documentation
                   regex-compat -any
     default-language: Haskell2010
     hs-source-dirs: test-suite
-    ghc-options: -Wall -Werror
+    ghc-options: -Wall
+
 test-suite style
     type: exitcode-stdio-1.0
     main-is: HLint.hs

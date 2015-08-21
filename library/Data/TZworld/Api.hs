@@ -1,7 +1,20 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# OPTIONS_GHC -fno-warn-unused-imports -fno-warn-unused-binds #-}
+{-|
+Module      : Data.TZworld.Api
+Description : An api that provides a way to lookup a timezone by location
+Copyright   : (c) Dan Plubell, 2015
+                  
+License     : MIT
+Maintainer  : danplubell@gmail.com
+Stability   : experimental
+Portability : POSIX
 
+This module expose a method for finding an Olson time zone a location.
+The location is input as a latitude and longitude value.
+
+-}
 
 module Data.TZworld.Api (findTZByLoc) where
 
@@ -25,7 +38,7 @@ instance FromRow TZWorldField where
 instance ToRow TZWorldField where
   toRow (TZWorldField id' blob) = toRow (id', blob)
 
-type Longitude = Double
+type Longitude = Double 
 type Latitude = Double
 {- A polygon that has a collection of indexed polygon coordinates  -}
 data TZPoly = TZPoly {
@@ -75,10 +88,12 @@ loadBucket id' = do
   let tzbin = DB.decode (bucketbytes (head r))::(DS.Set TZPoly)
   close db
   return tzbin
-
-findTZByLoc::(Latitude,Longitude) -> IO String
+-- | Find an Olson time zone by providing the latitude and longitude of a location 
+findTZByLoc::(Latitude,Longitude) -- ^ The latitude and the longitude of the location
+             -> IO (Maybe String) -- ^ The Olson time zone if it is defined for the location
 findTZByLoc (la,lo) = do
   tzpolyset <- getLongitudeBucket lo
   let tz = checkTZByLoc (la, lo) tzpolyset
-  return tz
+  return $ if null tz  then Nothing else Just tz
+            
   

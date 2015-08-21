@@ -29,5 +29,5 @@ haddock:
         # dist/doc/html/tzworld-api/index.html
 test:
 	cabal test --jobs
-	check check
+	cabal check
 
