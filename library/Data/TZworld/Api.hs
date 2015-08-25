@@ -75,25 +75,36 @@ checkTZByLoc t  = DS.foldl' getTZName []
 calcBucket ::Double -> Int
 calcBucket c = floor ( c/15.00)::Int
 
-getLongitudeBucket::Double -> IO (DS.Set TZPoly)
+getLongitudeBucket::Double -> IO (Maybe (DS.Set TZPoly))
 getLongitudeBucket l = loadBucket (calcBucketId l)
   where calcBucketId l' = 12 + calcBucket l'
                         
-loadBucket::Int -> IO (DS.Set TZPoly)
+loadBucket::Int -> IO (Maybe (DS.Set TZPoly))
 loadBucket id' = do
-  fp <- getDataFileName "tzworld.db"
+  fp <- getDataFileName "data/tzworld.db"
   db <- open fp
   r <- query db "SELECT * FROM tzworld where id = ?" (Only(id'::Int))::IO [TZWorldField]
+  if null r
+    then do
+        close db
+        return Nothing
+    else do
+      let tzbin = DB.decode (bucketbytes (head r))::(DS.Set TZPoly)
+      close db
+      return (Just tzbin)
   
-  let tzbin = DB.decode (bucketbytes (head r))::(DS.Set TZPoly)
-  close db
-  return tzbin
+      
+  
 -- | Find an Olson time zone by providing the latitude and longitude of a location 
 findTZByLoc::(Latitude,Longitude) -- ^ The latitude and the longitude of the location
-             -> IO (Maybe String) -- ^ The Olson time zone if it is defined for the location
+             -> IO (Either String  (Maybe String)) -- ^ The Olson time zone if it is defined for the location
 findTZByLoc (la,lo) = do
   tzpolyset <- getLongitudeBucket lo
-  let tz = checkTZByLoc (la, lo) tzpolyset
-  return $ if null tz  then Nothing else Just tz
+  return $
+   case tzpolyset of
+              Nothing -> Left "The longitude value was out of range"
+              Just s  ->do let tz = checkTZByLoc (la,lo) s 
+                           if null tz then Right Nothing else Right (Just tz)
+      
             
   

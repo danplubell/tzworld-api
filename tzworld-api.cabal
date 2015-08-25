@@ -1,5 +1,5 @@
 name: tzworld-api
-version: 0.0.0
+version: 0.1.0
 cabal-version: >=1.10
 build-type: Simple
 license: MIT
@@ -16,11 +16,11 @@ description:  API for finding an Olson time zone based on a location given as la
               
 category: Time
 author: Dan Plubell <danplubell@gmail.com>
-tested-with: GHC ==7.10
+tested-with: GHC ==7.10.2
 extra-source-files:
     CHANGELOG.md
     README.md
-data-files: tzworld.db
+data-files: data/tzworld.db
 source-repository head
     type: git
     location: git@github.com:danplubell/tzworld-api.git
