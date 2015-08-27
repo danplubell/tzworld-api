@@ -19,8 +19,21 @@ main = do
                 Just a -> return a
                 Nothing -> error "The longitude value was invalid"
   
-       tz <- findTZByLoc (lat, long)
-       case tz of
-         Nothing -> putStrLn $ "A time zone was not found for latitude: " `mappend` show lat `mappend` " longitude: " `mappend` show long
-         Just a  -> putStrLn $ "The time zone is [" `mappend` a `mappend` "] for latitude: " `mappend` show lat `mappend` " longitude: " `mappend` show long
-  
+       tze <- findTZByLoc (lat, long)
+       case tze of
+         Left str -> putStrLn str
+         Right tz -> case tz of
+                       Nothing -> putStrLn $ "A time zone was not found for latitude: "
+                                  `mappend` show lat
+                                  `mappend` " longitude: "
+                                  `mappend` show long
+                       Just a  -> putStrLn $ "The time zone is ["
+                                  `mappend` a
+                                  `mappend` "] for latitude: "
+                                  `mappend` show lat
+                                  `mappend` " longitude: "
+                                  `mappend` show long
+         {-case tz of 
+                         Nothing -> putStrLn $ "A time zone was not found for latitude: " `mappend` show lat `mappend` " longitude: " `mappend` show long
+                         Just a  -> putStrLn $ "The time zone is [" `mappend` a `mappend` "] for latitude: " `mappend` show lat `mappend` " longitude: " `mappend` show long
+-  -}
