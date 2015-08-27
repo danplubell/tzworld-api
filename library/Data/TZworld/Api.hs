@@ -25,7 +25,6 @@ import qualified Data.Set as DS
 import qualified Data.ByteString.Lazy as BL
 import Database.SQLite.Simple
 import Paths_tzworld_api
-import Control.Exception
 import qualified Control.Exception.Enclosed as CE
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Either
@@ -80,25 +79,27 @@ checkTZByLoc t  = DS.foldl' getTZName []
 calcBucket ::Longitude -> Int
 calcBucket c = floor ( c/15.00)::Int
 
-catchAny:: IO a -> (SomeException -> IO a) -> IO a
-catchAny = Control.Exception.catch
  
-{- Look in the database for the appropriate bucket -}
+{- Look in the database for the appropriate longitude bucket -}
 getLongitudeBucket::Longitude -> IO (Either String (DS.Set TZPoly))
 getLongitudeBucket l  = do
+   
   fp <- getDataFileName "data/tzworld.db"  
   e <- runEitherT $ do
+    longi <- if l < (-180.0) || l > 180.0
+             then  left "The longitude value was not in range.  The valid range is -180 to 180"
+             else return l  
     dbio <- lift $ CE.tryAny $ open fp
     conn <- case dbio of
              Right c -> lift $ return c
              Left _ -> left $ "Error opening database: " `mappend` fp
     erio <- lift $ CE.tryAny
-      (query conn "SELECT * FROM tzworld where id = ?" (Only(calcBucketId l::Int))::IO [TZWorldField])
+      (query conn "SELECT * FROM tzworld where id = ?" (Only(calcBucketId longi::Int))::IO [TZWorldField])
     r <- case erio of
            Right rio -> return rio
-           Left e -> left $ show e  
-    if null r
-    then left "The longitude value was not in range.  The valid range is -180 to 180"
+           Left e -> left $ "An error occurred while looking up the longitude bucket: " `mappend` show e  
+    if null r 
+    then left $ "The database format is invalid. A longitude bucket was not found for: " `mappend` show  (calcBucketId longi)
     else
         return $ Right (DB.decode (bucketbytes (head r))::(DS.Set TZPoly))
     
