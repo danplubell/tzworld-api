@@ -1,5 +1,5 @@
 {-#LANGUAGE OverloadedStrings #-}
-{-#GHC_OPTIONS -fnowarn-unused-imports #-}
+{-#OPTIONS_GHC -fno-warn-unused-imports #-}
 
 module Main (main) where
 
