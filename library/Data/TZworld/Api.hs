@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# OPTIONS_GHC -fno-warn-unused-binds #-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
+
 {-|
 Module      : Data.TZworld.Api
 Description : An api that provides a way to lookup a timezone by location
@@ -32,6 +34,7 @@ import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Char8 as BS
 import Text.Read
 import Data.Monoid as DM
+import Control.Applicative
 
 data TimeZone = TimeZone {
     tzname::String
