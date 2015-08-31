@@ -16,18 +16,34 @@ The location is provided as a latitude and longitude value.
 
 -}
 
-module Data.TZworld.Api (findTZByLoc) where
+module Data.TZworld.Api (findTZByLoc, TimeZone(..),Message (..), handleLocation) where
 
 import qualified Data.List as DL
 import qualified Data.Binary as DB
 import GHC.Generics
 import qualified Data.Set as DS
-import qualified Data.ByteString.Lazy as BL
 import Database.SQLite.Simple
 import Paths_tzworld_api
 import qualified Control.Exception.Enclosed as CE
-import Control.Monad.Trans.Class
+import Control.Monad.Trans.Class as CMC
 import Control.Monad.Trans.Either
+import Data.Aeson
+import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString.Char8 as BS
+import Text.Read
+
+data TimeZone = TimeZone {
+    tzname::String
+  , tzlatitude::Double
+  , tzlongitude::Double
+  , tzfound::Bool
+  } deriving (Show,Generic)
+instance ToJSON TimeZone
+
+data Message = Message {
+  message::String
+  } deriving (Show, Generic)
+instance ToJSON Message
 
 
 data TZWorldField = TZWorldField {
@@ -89,11 +105,11 @@ getLongitudeBucket l  = do
     longi <- if l < (-180.0) || l > 180.0
              then  left "The longitude value was not in range.  The valid range is -180 to 180"
              else return l  
-    dbio <- lift $ CE.tryAny $ open fp
+    dbio <- CMC.lift $ CE.tryAny $ open fp
     conn <- case dbio of
-             Right c -> lift $ return c
+             Right c -> CMC.lift $ return c
              Left _ -> left $ "Error opening database: " `mappend` fp
-    erio <- lift $ CE.tryAny
+    erio <- CMC.lift $ CE.tryAny
       (query conn "SELECT * FROM tzworld where id = ?" (Only(calcBucketId longi::Int))::IO [TZWorldField])
     r <- case erio of
            Right rio -> return rio
@@ -120,3 +136,21 @@ findTZByLoc (la,lo) = do
               Right s  -> do let tz = checkTZByLoc (la,lo) s 
                              if null tz then Right Nothing else Right (Just tz)
               Left str -> Left str
+
+handleLocation::BS.ByteString -> BS.ByteString -> IO (Either String TimeZone)
+handleLocation la lo = case (readEither (BS.unpack la)::Either String Double , readEither (BS.unpack lo)::Either String Double) of
+        (Left las, Left los )   -> return $ Left
+           ("The latitude and longitude parameters are not numeric:  "  `mappend` las `mappend` " " `mappend` los)
+        (Left las, _ )           -> return $ Left
+           ("The latitude paramter is not numeric: " `mappend` las)
+        ( _,Left los)            -> return $ Left
+           ("The longitude parameter is not numeric: " `mappend` los)
+        (Right lae, Right loe)     -> findTZ lae loe
+
+findTZ::Double -> Double -> IO (Either String TimeZone)
+findTZ la lo = do
+  tze <- findTZByLoc (la,lo)
+  case tze of
+   Left str        -> return $ Left str
+   Right Nothing   -> return $ Right $ TimeZone "" la lo False
+   Right (Just tz) -> return $ Right $ TimeZone tz la lo True
