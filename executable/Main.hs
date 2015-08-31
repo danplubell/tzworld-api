@@ -1,9 +1,12 @@
 {-#LANGUAGE OverloadedStrings #-}
+{-#GHC_OPTIONS -fnowarn-unused-imports #-}
+
 module Main (main) where
 
 import Data.TZworld.Api
 import System.Environment
 import Text.Read
+import Data.Monoid
 
 main :: IO ()
 main = do
