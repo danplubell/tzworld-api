@@ -109,17 +109,20 @@ getLongitudeBucket l  = do
     longi <- if l < (-180.0) || l > 180.0
              then  left "The longitude value was not in range.  The valid range is -180 to 180"
              else return l  
-    dbio <- CMC.lift $ CE.tryAny $ open fp
+    dbio <- CMC.lift . CE.tryAny $ open fp
     conn <- case dbio of
              Right c -> CMC.lift $ return c
-             Left _ -> left $ "Error opening database: " `DM.mappend` fp
+             Left _ -> left $ "Error opening database: " 
+                      `DM.mappend` fp
     erio <- CMC.lift $ CE.tryAny
       (query conn "SELECT * FROM tzworld where id = ?" (Only(calcBucketId longi::Int))::IO [TZWorldField])
     r <- case erio of
            Right rio -> return rio
-           Left e -> left $ "An error occurred while looking up the longitude bucket: " `DM.mappend` show e  
+           Left e -> left $ "An error occurred while looking up the longitude bucket: " 
+                    `DM.mappend` show e  
     if null r 
-    then left $ "The database format is invalid. A longitude bucket was not found for: " `DM.mappend` show  (calcBucketId longi)
+    then left $ "The database format is invalid. A longitude bucket was not found for: " 
+         `DM.mappend` show  (calcBucketId longi)
     else
         return $ Right (DB.decode (bucketbytes (head r))::(DS.Set TZPoly))
     
@@ -142,9 +145,11 @@ findTZByLoc (la,lo) = do
               Left str -> Left str
 
 handleLocation::BS.ByteString -> BS.ByteString -> IO (Either String TimeZone)
-handleLocation la lo = case (readEither (BS.unpack la)::Either String Double , readEither (BS.unpack lo)::Either String Double) of
+handleLocation la lo = case (readEither (BS.unpack la)::Either String Double 
+                            , readEither (BS.unpack lo)::Either String Double) of
         (Left las, Left los )   -> return $ Left
-           ("The latitude and longitude parameters are not numeric:  "  `DM.mappend` las `DM.mappend` " " `DM.mappend` los)
+           ("The latitude and longitude parameters are not numeric:  "  
+            `DM.mappend` las `DM.mappend` " " `DM.mappend` los)
         (Left las, _ )           -> return $ Left
            ("The latitude paramter is not numeric: " `DM.mappend` las)
         ( _,Left los)            -> return $ Left
@@ -156,5 +161,5 @@ findTZ la lo = do
   tze <- findTZByLoc (la,lo)
   case tze of
    Left str        -> return $ Left str
-   Right Nothing   -> return $ Right $ TimeZone "" la lo False
-   Right (Just tz) -> return $ Right $ TimeZone tz la lo True
+   Right Nothing   -> return . Right $ TimeZone "" la lo False
+   Right (Just tz) -> return . Right $ TimeZone tz la lo True

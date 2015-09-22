@@ -13,4 +13,4 @@ arguments =
 main :: IO ()
 main = do
     hints <- hlint arguments
-    if null hints then exitSuccess else exitFailure
+    if null hints then exitFailure else exitSuccess
