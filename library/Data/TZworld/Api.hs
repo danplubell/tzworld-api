@@ -7,7 +7,7 @@
 Module      : Data.TZworld.Api
 Description : An api that provides a way to lookup a timezone by location
 Copyright   : (c) Dan Plubell, 2015
-                  
+
 License     : MIT
 Maintainer  : danplubell@gmail.com
 Stability   : experimental
@@ -75,7 +75,7 @@ instance DB.Binary TZPoly
 
 
 pnpolyt::(Latitude,Longitude)->Bool->((Latitude,Longitude),(Latitude,Longitude))->Bool
-pnpolyt (tx,ty) b ((xi,yi),(xj,yj))   = if pnpolytest tx ty xi yi xj yj  
+pnpolyt (tx,ty) b ((xi,yi),(xj,yj))   = if pnpolytest tx ty xi yi xj yj
                                        then not b
                                        else b
 
@@ -85,13 +85,13 @@ pnpolytest testx testy vertxi vertyi vertxj vertyj =
      (testx < (vertxj - vertxi) * (testy - vertyi)/(vertyj - vertyi) + vertxi)
 
 pnpoly::(Latitude,Longitude)->[((Latitude,Longitude),(Latitude,Longitude))]->Bool
-pnpoly t  = DL.foldl' (pnpolyt t) False  
+pnpoly t  = DL.foldl' (pnpolyt t) False
 
 isPointInPoly::(Latitude,Longitude)->TZPoly->Bool
 isPointInPoly t p = pnpoly t (tzpolycoords p)
 
 checkTZByLoc :: (Latitude,Longitude) -> DS.Set TZPoly -> String
-checkTZByLoc t  = DS.foldl' getTZName []  
+checkTZByLoc t  = DS.foldl' getTZName []
                       where getTZName b a  = if isPointInPoly t a
                                              then tzpolyname a
                                              else b
@@ -99,40 +99,40 @@ checkTZByLoc t  = DS.foldl' getTZName []
 calcBucket ::Longitude -> Int
 calcBucket c = floor ( c/15.00)::Int
 
- 
+
 {- Look in the database for the appropriate longitude bucket -}
 getLongitudeBucket::Longitude -> IO (Either String (DS.Set TZPoly))
 getLongitudeBucket l  = do
-   
-  fp <- getDataFileName "data/tzworld.db"  
+
+  fp <- getDataFileName "data/tzworld.db"
   e <- runEitherT $ do
     longi <- if l < (-180.0) || l > 180.0
              then  left "The longitude value was not in range.  The valid range is -180 to 180"
-             else return l  
+             else return l
     dbio <- CMC.lift . CE.tryAny $ open fp
     conn <- case dbio of
              Right c -> CMC.lift $ return c
-             Left _ -> left $ "Error opening database: " 
+             Left _ -> left $ "Error opening database: "
                       `DM.mappend` fp
     erio <- CMC.lift $ CE.tryAny
       (query conn "SELECT * FROM tzworld where id = ?" (Only(calcBucketId longi::Int))::IO [TZWorldField])
     r <- case erio of
            Right rio -> return rio
-           Left e -> left $ "An error occurred while looking up the longitude bucket: " 
-                    `DM.mappend` show e  
-    if null r 
-    then left $ "The database format is invalid. A longitude bucket was not found for: " 
+           Left e -> left $ "An error occurred while looking up the longitude bucket: "
+                    `DM.mappend` show e
+    if null r
+    then left $ "The database format is invalid. A longitude bucket was not found for: "
          `DM.mappend` show  (calcBucketId longi)
     else
         return $ Right (DB.decode (bucketbytes (head r))::(DS.Set TZPoly))
-    
+
   case e of
     Left a -> return $ Left a -- the exception message
     Right b -> return b       -- the result
 
   where calcBucketId l' = 12 + calcBucket l'
 
--- | Find an Olson time zone by providing the latitude and longitude of a location 
+-- | Find an Olson time zone by providing the latitude and longitude of a location
 findTZByLoc::(Latitude,Longitude)                  -- ^ The latitude and the longitude of the location
              -> IO (Either String  (Maybe String)) -- ^ The Olson time zone if it is defined for the location
                                                    -- ^ Or an error string if a problem occurred while retrieving time zone
@@ -140,15 +140,15 @@ findTZByLoc (la,lo) = do
   tzpolyset <- getLongitudeBucket lo
   return $
    case tzpolyset of
-              Right s  -> do let tz = checkTZByLoc (la,lo) s 
+              Right s  -> do let tz = checkTZByLoc (la,lo) s
                              if null tz then Right Nothing else Right (Just tz)
               Left str -> Left str
 
 handleLocation::BS.ByteString -> BS.ByteString -> IO (Either String TimeZone)
-handleLocation la lo = case (readEither (BS.unpack la)::Either String Double 
+handleLocation la lo = case (readEither (BS.unpack la)::Either String Double
                             , readEither (BS.unpack lo)::Either String Double) of
         (Left las, Left los )   -> return $ Left
-           ("The latitude and longitude parameters are not numeric:  "  
+           ("The latitude and longitude parameters are not numeric:  "
             `DM.mappend` las `DM.mappend` " " `DM.mappend` los)
         (Left las, _ )           -> return $ Left
            ("The latitude paramter is not numeric: " `DM.mappend` las)
